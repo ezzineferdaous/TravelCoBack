@@ -1,0 +1,47 @@
+version: '3.8'  # Specify the version of Docker Compose
+
+services:
+  app:
+    image: php:8.3-apache
+    container_name: travelco_app  # Unique container name for the "app" service
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - ./000-default.conf:/etc/apache2/sites-available/0000-default.conf
+    ports:
+      - "8000:80"
+    networks:
+      - eventapp_network
+    environment:
+      DB_HOST: db
+      DB_PORT: 3307
+      DB_DATABASE: travel
+      DB_USERNAME: root
+      DB_PASSWORD: "0000" 
+    depends_on:
+      - db
+    command: /bin/bash -c "docker-php-ext-install pdo pdo_mysql && a2enmod rewrite && apache2-foreground"
+
+  db:
+    image: mysql:8.0
+    container_name: travelco_db  # Unique container name for the "db" service
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"  # Allow empty password
+      MYSQL_ROOT_PASSWORD: "0000"  # Root password set to empty
+      MYSQL_DATABASE: travel  # Default database to create
+      # Optionally, you can create a regular user:
+      # MYSQL_USER: "your_user"
+      # MYSQL_PASSWORD: "your_password"  # Password for the regular user
+    ports:
+      - "3307:3306"
+    volumes:
+      - eventapp_data:/var/lib/mysql
+    networks:
+      - eventapp_network
+
+networks:
+  eventapp_network:
+    name: eventapp_network
+
+volumes:
+  eventapp_data:
